@@ -1,0 +1,198 @@
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Lenguaje</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Desarrollador</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Features</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Pricing</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <style>
+        body {
+            background: linear-gradient(to right, #c0c0aa, #1cefff);
+        }
+        .btn {
+            margin-right: 5px;
+        }
+    </style>
+
+    <div class="container mt-5">
+        <div class="row">
+            <%
+                Programador programador = new Programador();
+                String id = request.getParameter("id");
+                String lenguaje = "";
+                String descripcion = "";
+                String numeroProgramadores = "";
+                
+                if (id != null && !id.isEmpty()) {
+                    try {
+                        Connection con = DriverManager.getConnection("jdbc:mysql://localhost/desarrolladorbd?user=root&password=");
+                        Statement st = con.createStatement();
+                        ResultSet rs = st.executeQuery("SELECT * FROM lenguaje WHERE id_lenguaje = " + id);
+                        if (rs.next()) {
+                            lenguaje = rs.getString("lenguaje");
+                            descripcion = rs.getString("descripcion");
+                            numeroProgramadores = rs.getString("numeroProgramadores");
+                        }
+                        rs.close();
+                        st.close();
+                        con.close();
+                    } catch (Exception e) {
+                        out.println("Error al cargar el lenguaje para editar: " + e);
+                    }
+                }
+
+                if (request.getParameter("eliminar") != null) {
+                    int idEliminar = Integer.parseInt(request.getParameter("id"));
+                    programador.eliminarProgramador(idEliminar);
+                    out.println("<script>alert('Registro eliminado con éxito!');</script>");
+                    response.sendRedirect("index.jsp");
+                }
+
+                if (request.getParameter("guardar") != null) {
+                    lenguaje = request.getParameter("lenguaje");
+                    descripcion = request.getParameter("descripcion");
+                    numeroProgramadores = request.getParameter("numeroProgramadores");
+
+                    if (id != null && !id.isEmpty()) {
+                        int idEditar = Integer.parseInt(id);
+                        programador.editarProgramador(idEditar, lenguaje, descripcion, Integer.parseInt(numeroProgramadores));
+                        out.println("<script>alert('Registro editado con éxito!');</script>");
+                    } else {
+                        programador.crearProgramador(lenguaje, descripcion, Integer.parseInt(numeroProgramadores));
+                        out.println("<script>alert('Registro guardado con éxito!');</script>");
+                    }
+                    response.sendRedirect("index.jsp");
+                }
+            %>
+
+            <div class="col-md-6">
+                <h3>Formulario de Lenguajes</h3>
+                <form method="post">
+                    <div class="form-group">
+                        <label for="lenguaje">Lenguaje</label>
+                        <input type="text" class="form-control" name="lenguaje" placeholder="Python" value="<%= lenguaje %>">
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="3"><%= descripcion %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="numeroProgramadores">Número de Programadores</label>
+                        <input type="number" class="form-control" name="numeroProgramadores" value="<%= numeroProgramadores %>">
+                    </div>
+
+                    <% if (id != null && !id.isEmpty()) { %>
+                        <input type="hidden" name="id" value="<%= id %>">
+                    <% } %>
+
+                    <button type="submit" class="btn btn-success" name="guardar">Guardar</button>
+                    <button type="reset" class="btn btn-secondary">Limpiar</button>
+                </form>
+            </div>
+
+            <div class="col-md-6">
+                <h3>Listado de Lenguajes</h3>
+                <div class="table-responsive">
+                    <table class="table table-light table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Lenguaje</th>
+                                <th scope="col">Descripción</th>
+                                <th scope="col"># Programadores</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <%
+                                Connection con = null;
+                                Statement st = null;
+                                ResultSet rs = null;
+
+                                try {
+                                    Class.forName("com.mysql.jdbc.Driver");
+                                    con = DriverManager.getConnection("jdbc:mysql://localhost/desarrolladorbd?user=root&password=");
+                                    st = con.createStatement();
+                                    rs = st.executeQuery("SELECT * FROM lenguaje");
+                                    while (rs.next()) {
+                            %>
+                            <tr>
+                                <th scope="row"><%= rs.getString(1) %></th>
+                                <td><%= rs.getString(2) %></td>
+                                <td><%= rs.getString(3) %></td>
+                                <td><%= rs.getString(4) %></td>
+                                <td>
+                                    
+                                    <a href="index.jsp?id=<%= rs.getString(1) %>"class="btn btn-outline-primary btn-sm rounded-circle" title="Editar">
+                                        <i class="fa fa-pencil" aria-hidden="true"></i>
+                                    </a>
+
+                                    <form method="post" style="display: inline;">
+                                        <input type="hidden" name="id" value="<%= rs.getString(1) %>">
+                                        <button type="submit" name="eliminar" class="btn btn-danger btn-sm rounded-circle" 
+                                                onclick="return confirm('¿Desea eliminar este lenguaje?');">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <%
+                                    }
+                                } catch (Exception e) {
+                                    out.print(e + " Error en MySQL");
+                                } finally {
+                                    if (rs != null) rs.close();
+                                    if (st != null) st.close();
+                                    if (con != null) con.close();
+                                }
+                            %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+
+
+<%@page import="programador.Programador"%>
+<%@page import="java.sql.DriverManager"%>
+<%@page import="java.sql.ResultSet"%>
+<%@page import="java.sql.Statement"%>
+<%@page import="java.sql.Connection"%>
+<%@page contentType="text/html" pageEncoding="UTF-8" %>
